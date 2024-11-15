@@ -1,23 +1,29 @@
 'use client';
 
+import { useEffect, useState } from "react";
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 
+export default function Providers({ children }: { children: React.ReactNode }) {
+  const [isClient, setIsClient] = useState(false);
+  const [theme, setTheme] = useState("light");
 
-export default function Providers({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+  useEffect(() => {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setTheme(prefersDark ? "dark" : "light");
+    setIsClient(true); 
+  }, []);
 
-  
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <DynamicContextProvider
-      theme="auto"
+      theme={theme}
       settings={{
-        environmentId: "2762a57b-faa4-41ce-9f16-abff9300e2c9",
-           walletConnectors: [EthereumWalletConnectors],
+        environmentId: process.env.NEXT_PUBLIC_ENVIRONMENT_ID,
+        walletConnectors: [EthereumWalletConnectors],
       }}
     >
       {children}

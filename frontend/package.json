@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@dynamic-labs/ethereum": "^3.6.3",
-    "@dynamic-labs/sdk-react-core": "*",
+    "@dynamic-labs/sdk-react-core": "^3.6.3",
     "next": "15.0.3",
-    "react": "19.0.0-rc-66855b96-20241106",
-    "react-dom": "19.0.0-rc-66855b96-20241106",
-    "viem": "*"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "viem": "^2.21.45"
   },
   "devDependencies": {
     "@types/node": "^20",
