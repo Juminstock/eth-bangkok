@@ -1,1 +1,1 @@
-# eth-bangkok
+# Project for ETH Global Bangkok
