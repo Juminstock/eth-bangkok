@@ -1,91 +1,66 @@
-# Project Title
+## Foundry
 
-![Project Image](#)
-> *One-liner describing the project*
+**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
-[**View Demo**](#) | [**Documentation**](#) | [**Report a Bug**](#)
+Foundry consists of:
 
----
+-   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
+-   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
+-   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
+-   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
 
-## Table of Contents
-- [About the Project](#about-the-project)
-  - [Demo](#demo)
-  - [How it Works](#how-it-works)
-  - [Built With](#built-with)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Contributing](#contributing)
-- [Contact](#contact)
-  - [Team](#team)
-- [License](#license)
+## Documentation
 
----
+https://book.getfoundry.sh/
 
-## About the Project
+## Usage
 
-### Demo
-Provide a link or description of the demo here.
+### Build
 
-### How it Works
-Describe the main workflow or features.
+```shell
+$ forge build
+```
 
-### Built With
-- Tool/Framework 1
-- Tool/Framework 2
-- Tool/Framework 3
+### Test
 
----
+```shell
+$ forge test
+```
 
-**Project Title** is supported by the following sponsors:
-- [LayerZero](#)
+### Format
 
----
+```shell
+$ forge fmt
+```
 
-## Getting Started
+### Gas Snapshots
 
-### Prerequisites
-List any requirements or dependencies here.
+```shell
+$ forge snapshot
+```
 
-### Installation
-Provide step-by-step instructions to set up the project locally.
+### Anvil
 
----
+```shell
+$ anvil
+```
 
-## Contributing
-Guidelines on how others can contribute to your project.
+### Deploy
 
----
+```shell
+$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+```
 
-## Contact
+### Cast
 
-### Team
-- **Ariel Cardenas** - [Ariiellus](https://x.com/Ariiellus)
-- **Carlos Rodriguez** - [Juminstock](https://x.com/Juminstock)
-- **Sury Bonfil** - [holaNFT](https://x.com/holaNFT)
-- **Anotherdev** - [0xAnotherdev](https://x.com/0xAnotherdev)
+```shell
+$ cast <subcommand>
+```
 
----
+### Help
 
-## License
-MIT License
-
-Copyright (c) 2024 Carlos Rodríguez
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+```shell
+$ forge --help
+$ anvil --help
+$ cast --help
+```
