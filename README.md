@@ -1,6 +1,6 @@
 # Project Title
 
-![Project Image](#) <!-- Replace # with the image URL -->
+![Project Image](#)
 > *One-liner describing the project*
 
 [**View Demo**](#) | [**Documentation**](#) | [**Report a Bug**](#)
