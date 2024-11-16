@@ -9,8 +9,8 @@ const bricolage_grotesque = Bricolage_Grotesque({
 })
 
 export const metadata: Metadata = {
-  title: "ETH Global Bangkok",
-  description: "Manzana Team",
+  title: "MetaIntents",
+  description: "ETHGlobal Bangkok Hackathon",
 };
 
 export default function RootLayout({
