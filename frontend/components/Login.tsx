@@ -3,7 +3,17 @@ import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 
 function Login() {
     return (
-        <div>
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100vh'
+            }}
+        >
+            <h1 className="bricolage_grotesque" style={{ margin: '5px' }}>Hello, there!</h1>
+            <h1 className='bricolage_grotesque' style={{ margin: '5px' }}>Welcome to MetaIntent</h1>
             <DynamicContextProvider
                 settings={{
                 environmentId: '865c2fad-5f3a-4b3c-8d1c-62dad61f518d',
@@ -11,8 +21,6 @@ function Login() {
                 }}>
                 <DynamicWidget />
             </DynamicContextProvider>
-            <h1 className="bricolage_grotesque">Hello, there!</h1>
-            <h1 className='bricolage_grotesque' style={{ margin: '5px' }}>Welcome to MetaIntent</h1>
         </div>
     )
 }
