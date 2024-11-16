@@ -4,6 +4,11 @@ out = "out"
 libs = ["lib"]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+remappings = [
+    '@layerzerolabs/oapp-evm/=lib/devtools/packages/oapp-evm/',
+    '@layerzerolabs/lz-evm-protocol-v2/=lib/layerzero-v2/packages/layerzero-v2/evm/protocol',
+]
+
 
 [etherscan]
 sepolia = { key = "I36FHHV8SEQP38FSSMQUCI92BJK4H5PJSE" }
@@ -12,3 +17,5 @@ base-sepolia = {key = "3S3MF6Z2XVJQNEZBPVQ86EY684Q44XE3E2"}
 [rpc_endpoints]
 sepolia = "https://rpc.ankr.com/eth_sepolia"
 base-sepolia = "https://sepolia.base.org"
+
+

@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ILayerZeroEndpointV2, MessagingFee, MessagingReceipt, Origin} from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
+import {AddressCast} from "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/AddressCast.sol";
+import {ReadCodecV1, EVMCallComputeV1, EVMCallRequestV1} from "@layerzerolabs/oapp-evm/contracts/oapp/libs/ReadCodecV1.sol";
+import {OAppOptionsType3} from "@layerzerolabs/oapp-evm/contracts/oapp/libs/OAppOptionsType3.sol";
+import {OAppRead} from "@layerzerolabs/oapp-evm/contracts/oapp/OAppRead.sol";
 import "./Enum.sol";
 import {ISpokePool} from "./interfaces/ISpokePool.sol";
 import {Counter} from "./Counter.sol";
@@ -29,6 +35,15 @@ event TransactionCreated(
     uint256 id
 );
 
+event OrderSettled(
+    address tokenIn,
+    address tokenOut,
+    uint256 amount,
+    uint32 eid,
+    uint32 chainId,
+    address account
+);
+
 interface ISafe {
     function execTransactionFromModule(
         address to,
@@ -38,76 +53,73 @@ interface ISafe {
     ) external returns (bool success);
 }
 
-contract ChainAbstractionModule {
+contract ChainAbstractionModule is OAppRead, OAppOptionsType3 {
     mapping(uint256 => Transaction) public orderBook;
+    mapping(uint32 => address) public crossChainModules;
 
     uint256 internal txnCount;
-    uint16 internal n;
     uint256 public constant FILL_DEADLINE_BUFFER = 18000;
     uint32 public eid;
-
     ISpokePool public spokePool;
 
-    constructor(address _spokePool, uint32 _eid) {
+    /// @notice LayerZero read message type.
+    uint8 private constant READ_MSG_TYPE = 1;
+
+    /// @notice LayerZero read channel ID.
+    uint32 public READ_CHANNEL;
+
+    constructor(
+        address _spokePool,
+        uint32 _eid,
+        address _endpoint,
+        uint32 _readChannel
+    ) OAppRead(_endpoint, msg.sender) Ownable(msg.sender) {
         spokePool = ISpokePool(_spokePool);
         eid = _eid;
-
-        // Testing purposes
-        bytes memory incrementCountCalldata = abi.encodeWithSelector(
-            Counter.increment.selector
-        );
-        Order[] memory _orders = new Order[](1);
-        _orders[0] = Order({
-            tokenIn: 0x4200000000000000000000000000000000000006,
-            tokenOut:0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14,
-            amount: 100000000000000,
-            eid: 0,
-            chainId: 84532
-        });
-        createTransaction(
-            0x4Ff6d608f41c53DB6cf189648B843f5F4cb545d1,
-            0,
-            incrementCountCalldata,
-            0x37d9Bcb63118cbD2cdE1d0E24379a876d687738A,
-            _orders
-        );
+        READ_CHANNEL = _readChannel;
+        _setPeer(READ_CHANNEL, AddressCast.toBytes32(address(this)));
     }
 
-    function handleCrossChainSwapOrder(
-        uint256 transactionId,
-        address recipent,
-        uint256 relayFee,
-        bytes memory message
-    ) public {
-        Transaction storage txn = orderBook[transactionId];
-        Order memory order = getOrder(transactionId, eid);
-
-        uint256 currentTimestamp = block.timestamp - 36;
-        uint256 fillDeadline = currentTimestamp + FILL_DEADLINE_BUFFER;
-        ISafe safe = ISafe(txn.from);
-        bytes memory data = abi.encodeWithSignature(
-            "depositV3(address,address,address,address,uint256,uint256,uint256,address,uint32,uint32,uint32,bytes)",
-            txn.from,
-            recipent,
-            order.tokenOut,
-            order.tokenIn,
-            order.amount,
-            order.amount - relayFee,
-            order.chainId,
-            address(0),
-            currentTimestamp,
-            fillDeadline,
-            0,
-            message
-        );
-        bool success = safe.execTransactionFromModule(
-            address(spokePool),
-            order.amount,
-            data,
-            Enum.Operation.Call
-        );
-        require(success, "Safe transaction failed");
+    function setCrossChainModule(
+        uint32 _eid,
+        address _module
+    ) public onlyOwner {
+        crossChainModules[_eid] = _module;
     }
+
+    // function handleCrossChainSwapOrder(
+    //     uint256 transactionId,
+    //     address recipent,
+    //     uint256 relayFee,
+    //     bytes memory message
+    // ) public {
+
+    //     uint256 currentTimestamp = block.timestamp - 36;
+    //     uint256 fillDeadline = currentTimestamp + FILL_DEADLINE_BUFFER;
+    //     ISafe safe = ISafe(txn.from);
+    //     bytes memory data = abi.encodeWithSignature(
+    //         "depositV3(address,address,address,address,uint256,uint256,uint256,address,uint32,uint32,uint32,bytes)",
+    //         txn.from,
+    //         recipent,
+    //         order.tokenOut,
+    //         order.tokenIn,
+    //         order.amount,
+    //         order.amount - relayFee,
+    //         order.chainId,
+    //         address(0),
+    //         currentTimestamp,
+    //         fillDeadline,
+    //         0,
+    //         message
+    //     );
+    //     bool success = safe.execTransactionFromModule(
+    //         address(spokePool),
+    //         order.amount,
+    //         data,
+    //         Enum.Operation.Call
+    //     );
+    //     require(success, "Safe transaction failed");
+    // }
 
     function fulfillTransaction(uint256 _transactionId) public {
         Transaction storage txn = orderBook[_transactionId];
@@ -142,15 +154,119 @@ contract ChainAbstractionModule {
         txnCount++;
     }
 
-    function getOrder(
+   function getOrder(
         uint256 _transactionId,
         uint32 _eid
-    ) public view returns (Order memory) {
+    ) public view returns (address,address,address,uint256,uint32,uint32) {
         Transaction storage txn = orderBook[_transactionId];
         for (uint i = 0; i < txn.orders.length; i++) {
             if (txn.orders[i].eid == _eid) {
-                return txn.orders[i];
+                Order memory order = txn.orders[i];
+                return (
+                    order.tokenIn,
+                    order.tokenOut,
+                    txn.from,
+                    order.amount,
+                    order.eid,
+                    order.chainId
+                );
             }
         }
+    }
+
+    function readModule(
+        uint256 transactionId,
+        uint32 targetEid,
+        bytes calldata _extraOptions
+    ) external payable returns (MessagingReceipt memory receipt) {
+        bytes memory cmd = getCmd(transactionId, targetEid);
+        return
+            _lzSend(
+                READ_CHANNEL,
+                cmd,
+                combineOptions(READ_CHANNEL, READ_MSG_TYPE, _extraOptions),
+                MessagingFee(msg.value, 0),
+                payable(msg.sender)
+            );
+    }
+
+    function getReadModuleQuote(
+        bool _payInLzToken,
+        uint256 _transactionId,
+        uint32 _targetEid,
+        bytes calldata _extraOptions
+    ) external view returns (MessagingFee memory fee) {
+        bytes memory cmd = getCmd(_transactionId, _targetEid);
+        return
+            _quote(
+                READ_CHANNEL,
+                cmd,
+                combineOptions(READ_CHANNEL, READ_MSG_TYPE, _extraOptions),
+                _payInLzToken
+            );
+    }
+
+    function getCmd(
+        uint256 _transactionId,
+        uint32 targetEid
+    ) public view returns (bytes memory) {
+        require(
+            crossChainModules[targetEid] != address(0),
+            "Cross-chain module not set"
+        );
+
+        EVMCallRequestV1[] memory readRequests = new EVMCallRequestV1[](1);
+        bytes4 selector = bytes4(keccak256("getOrder(uint256,uint32)"));
+        bytes memory callData = abi.encodeWithSelector(
+            selector,
+            _transactionId,
+            eid
+        );
+
+        EVMCallRequestV1 memory readRequest = EVMCallRequestV1({
+            appRequestLabel: 1,
+            targetEid: targetEid,
+            isBlockNum: false,
+            blockNumOrTimestamp: uint64(block.timestamp),
+            confirmations: 1,
+            to: crossChainModules[targetEid],
+            callData: callData
+        });
+
+        readRequests[0] = readRequest;
+
+        return ReadCodecV1.encode(0, readRequests);
+    }
+
+    function setReadChannel(
+        uint32 _channelId,
+        bool _active
+    ) public override onlyOwner {
+        _setPeer(
+            _channelId,
+            _active ? AddressCast.toBytes32(address(this)) : bytes32(0)
+        );
+        READ_CHANNEL = _channelId;
+    }
+
+    function _lzReceive(
+        Origin calldata,
+        bytes32 /*_guid*/,
+        bytes calldata _message,
+        address,
+        bytes calldata
+    ) internal override {
+        (address tokenIn, address tokenOut, address account, uint256 amount, uint32 eid, uint32 chainId ) = abi.decode(
+            _message,
+            (address,address,address,uint256,uint32,uint32)
+        );
+        emit OrderSettled(
+            tokenIn,
+            tokenOut,
+            amount,
+            eid,
+            chainId,
+            account
+        );
     }
 }

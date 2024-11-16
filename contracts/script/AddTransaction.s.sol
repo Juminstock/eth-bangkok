@@ -11,8 +11,9 @@ contract AddTransaction is Script{
     ChainAbstractionModule public module;
 
     function setUp() public {
-        module = ChainAbstractionModule(0x5dc50f5adB4C746eFDf8f3E685E76540445Af26A);
+        module = ChainAbstractionModule(0x054E0eBC90a2B86c9cAb010b48F0d35CAdD3dE85);
     }
+
     function run() public {
         vm.startBroadcast();
         bytes memory incrementCountCalldata = abi.encodeWithSelector(
@@ -23,7 +24,7 @@ contract AddTransaction is Script{
             tokenIn: 0x4200000000000000000000000000000000000006,
             tokenOut: 0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14,
             amount: 100000000000000,
-            eid: 0,
+            eid: 40161,
             chainId: 84532
         });
         module.createTransaction(
