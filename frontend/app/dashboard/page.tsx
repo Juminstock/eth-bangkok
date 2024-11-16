@@ -7,6 +7,9 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import Header from '@/components/Header'
 
 const bricolage = Bricolage_Grotesque({ subsets: ['latin'] })
 
@@ -20,7 +23,7 @@ export default function Component() {
         { type: "Mint", date: "Nov 15", description: "ETHGlobal Bangkok I 1inch", chain: "Arbitrum", amount: "$29.85" },
         { type: "Mint", date: "Nov 15", description: "SEA | ETHGlobal Bangkok", chain: "Solana", amount: "$28.60" },
     ])
-
+    
     const [assets] = useState([
         { name: "Bitcoin", symbol: "BTC", amount: "0.5", value: "$15,000" },
         { name: "Ethereum", symbol: "ETH", amount: "2.3", value: "$4,140" },
@@ -39,7 +42,6 @@ export default function Component() {
                     <Image src="/meta-logo-blue.png" alt="Logo" width={180} height={180} />
                 </div>
             </nav>
-
             <div className="max-w-6xl mx-auto p-6">
             <h1 className="text-3xl font-bold mb-6 text-[#2E01DB]">Hello, {userName}!</h1>
 
@@ -54,7 +56,6 @@ export default function Component() {
                     </CardTitle>
                 </CardHeader>
         </Card>
-
           <div className="space-y-6">
             {/* Search Bar */}
             <Card className={`${isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-white/50 border-gray-200/50'} backdrop-blur-md`}>

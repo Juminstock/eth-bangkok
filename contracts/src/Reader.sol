@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-// Import necessary interfaces and contracts
-import {IQuoterV2} from "@uniswap/v3-periphery/contracts/interfaces/IQuoterV2.sol";
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -12,8 +10,24 @@ import {AddressCast} from "@layerzerolabs/lz-evm-protocol-v2/contracts/libs/Addr
 import {ReadCodecV1, EVMCallComputeV1, EVMCallRequestV1} from "@layerzerolabs/oapp-evm/contracts/oapp/libs/ReadCodecV1.sol";
 import {OAppOptionsType3} from "@layerzerolabs/oapp-evm/contracts/oapp/libs/OAppOptionsType3.sol";
 import {OAppRead} from "@layerzerolabs/oapp-evm/contracts/oapp/OAppRead.sol";
-import {ModuleMock} from "./ModuleMock.sol";
-import {ISpokePool} from "./interfaces/ISpokePool.sol";
+import {ChainAbstractionModule} from "./ChainAbstractionModule.sol";
+
+struct Order {
+    address tokenIn;
+    address tokenOut;
+    uint256 amount;
+    uint32 eid;
+    uint32 chainId;
+}
+
+event OrderSettled(
+    address tokenIn,
+    address tokenOut,
+    uint256 amount,
+    uint32 eid,
+    uint32 chainId,
+    address account
+);
 
 contract Reader is OAppRead, OAppOptionsType3 {
     event Read(address token, uint256 amount);
@@ -49,7 +63,7 @@ contract Reader is OAppRead, OAppOptionsType3 {
     uint32 public constant CHAIN_A_EID = 40245; // LayerZero EID for Ethereum Mainnet
     uint32 public constant CHAIN_A_ID = 11155111; // Chain ID for Ethereum Mainnet
     address public constant CHAIN_A_QUOTER =
-        0x3f78f2DBb7F2D2a94D25E202804FD60aA6107654; // Uniswap V3 QuoterV2 on Ethereum Mainnet
+        0xE6f867E993832E0432baCD4069529D0c76f5f274; // Uniswap V3 QuoterV2 on Ethereum Mainnet
     address public constant CHAIN_A_WETH =
         0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // WETH on Ethereum Mainnet
     address public constant CHAIN_A_USDC =
@@ -57,7 +71,6 @@ contract Reader is OAppRead, OAppOptionsType3 {
     uint24 public constant CHAIN_A_FEE = 3000; // 0.3% pool fee
     uint256 public constant FILL_DEADLINE_BUFFER = 18000;
 
-    ISpokePool public spokePool;
 
     /**
      * @notice Constructor to initialize the UniswapQuoteDemo contract with hardcoded chain configurations.
@@ -66,12 +79,11 @@ contract Reader is OAppRead, OAppOptionsType3 {
      */
     constructor(
         address _endpoint,
-        uint32 _readChannel,
-        address _spokePool
+        uint32 _readChannel
     ) OAppRead(_endpoint, msg.sender) Ownable(msg.sender) {
         // Initialize Chain A Configuration (Ethereum Mainnet)
         ChainConfig memory chainAConfig = ChainConfig({
-            confirmations: 5,
+            confirmations: 1,
             quoterAddress: CHAIN_A_QUOTER,
             tokenInAddress: CHAIN_A_WETH,
             tokenOutAddress: CHAIN_A_USDC,
@@ -86,7 +98,6 @@ contract Reader is OAppRead, OAppOptionsType3 {
         READ_CHANNEL = _readChannel;
         _setPeer(READ_CHANNEL, AddressCast.toBytes32(address(this)));
 
-        spokePool = ISpokePool(_spokePool);
     }
 
     // ===========================
@@ -157,8 +168,9 @@ contract Reader is OAppRead, OAppOptionsType3 {
             ChainConfig memory config = chainConfigs[targetEid];
 
             bytes memory callData = abi.encodeWithSelector(
-                ModuleMock.getOrder.selector,
-                0
+                ChainAbstractionModule.getOrder.selector,
+                2,
+                40161
             );
 
             readRequests[i] = EVMCallRequestV1({
@@ -173,36 +185,20 @@ contract Reader is OAppRead, OAppOptionsType3 {
         }
 
         EVMCallComputeV1 memory computeSettings = EVMCallComputeV1({
-            computeSetting: 0, // lzMap() and lzReduce()
+            computeSetting: 3, // lzMap() and lzReduce()
             targetEid: ILayerZeroEndpointV2(endpoint).eid(),
             isBlockNum: false,
             blockNumOrTimestamp: uint64(block.timestamp),
-            confirmations: 15,
+            confirmations: 1,
             to: address(this)
         });
 
         return ReadCodecV1.encode(0, readRequests, computeSettings);
     }
 
-    /**
-     * @notice Processes individual Uniswap QuoterV2 responses, encoding the result.
-     * @param _response The response from the read request.
-     * @return Encoded token output amount (USDC amount).
-     */
-    function lzMap(
-        bytes calldata,
-        bytes calldata _response
-    ) external pure returns (bytes memory) {
-        (
-            address account,
-            address tokenIn,
-            address tokenOut,
-            uint256 amount
-        ) = abi.decode(_response, (address, address, address, uint256));
-        return abi.encode(account, tokenIn, tokenOut, amount);
-    }
 
-    function _lzReceive(
+
+   function _lzReceive(
         Origin calldata,
         bytes32 /*_guid*/,
         bytes calldata _message,
@@ -210,38 +206,15 @@ contract Reader is OAppRead, OAppOptionsType3 {
         bytes calldata
     ) internal override {
         (
-            address account,
-            address tokenIn,
-            address tokenOut,
-            uint256 amount
-        ) = abi.decode(_message, (address, address, address, uint256));
-        emit Read(tokenOut, amount);
+            Order memory order,address account
+        ) = abi.decode(
+                _message,
+                (Order, address)
+            );
+        emit OrderSettled(order.tokenIn, order.tokenOut, order.amount, order.eid, order.chainId, account);
     }
-
-    function handleCrossChainSwapOrder(
-        address account,
-        address tokenIn,
-        address tokenOut,
-        uint256 amount,
-        uint256 relayFee
-    ) public {
-        uint256 currentTimestamp = block.timestamp - 36;
-        uint256 fillDeadline = currentTimestamp + FILL_DEADLINE_BUFFER;
-        spokePool.depositV3(
-            account,
-            account,
-            tokenOut,
-            tokenIn,
-            amount,
-            amount - relayFee,
-            CHAIN_A_ID,
-            address(0),
-            currentTimestamp,
-            fillDeadline,
-            0,
-            ""
-        );
-    }
+  
+    
 
     /// @notice Allows the contract to receive Ether.
     receive() external payable {}
