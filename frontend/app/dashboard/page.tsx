@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import Header from '@/components/Header'
+import SendTokensFlow from '@/components/SendTokensFlow'
+import SupplyFlow from '@/components/SupplyFlow'
 
 const bricolage = Bricolage_Grotesque({ subsets: ['latin'] })
 
@@ -36,12 +38,9 @@ export default function Component() {
 
     return (
         <div className={`min-h-screen ${isDarkMode ? 'text-white' : 'text-gray-900'} ${bricolage.className}`}>
-            {/* Navbar */}
-            <nav className="p-4 flex justify-between items-center bg-white/10 backdrop-blur-md">
-                <div className="flex items-center gap-2">
-                    <Image src="/meta-logo-blue.png" alt="Logo" width={180} height={180} />
-                </div>
-            </nav>
+            
+            <Header />
+
             <div className="max-w-6xl mx-auto p-6">
             <h1 className="text-3xl font-bold mb-6 text-[#2E01DB]">Hello, {userName}!</h1>
 
@@ -135,6 +134,7 @@ export default function Component() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
+
                 <Button
                   className="w-full bg-[#2E01DB] hover:bg-[#5439c0] text-white"
                   size="lg"
@@ -142,13 +142,7 @@ export default function Component() {
                   <Send className="mr-2 h-4 w-4" />
                   Transfer
                 </Button>
-                <Button
-                  className="w-full bg-[#000000] hover:bg-[#1b1a23] text-white"
-                  size="lg"
-                >
-                  <ArrowUpRight className="mr-2 h-4 w-4" />
-                  Lend
-                </Button>
+               <SupplyFlow 
               </div>
             </CardContent>
           </Card>

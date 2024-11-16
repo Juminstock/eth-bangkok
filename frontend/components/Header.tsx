@@ -36,7 +36,7 @@ function Header() {
       <div className='flex items-center gap-2'>
         <Image src='/meta-logo-blue.png' alt='Logo' width={180} height={180} />
       </div>
-      <div>
+      <div className='flex flex-row gap-2'>
       <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline">
