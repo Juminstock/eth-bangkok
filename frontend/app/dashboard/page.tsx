@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import Header from '@/components/Header'
 
 const bricolage = Bricolage_Grotesque({ subsets: ['latin'] })
 
@@ -30,16 +31,10 @@ export default function Component() {
     { name: "Solana", symbol: "SOL", amount: "50", value: "$3,750" },
   ])
 
-  const toggleDarkMode = () => setIsDarkMode(!isDarkMode)
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'text-white' : 'text-gray-900'} ${bricolage.className}`}>
-      {/* Navbar */}
-      <nav className="p-4 flex justify-between items-center bg-white/10 backdrop-blur-md">
-        <div className="flex items-center gap-2">
-          <Image src="/meta-logo-blue.png" alt="Logo" width={180} height={180} />
-        </div>
-      </nav>
+      <Header/> 
 
       <div className="max-w-6xl mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6 text-[#2E01DB]">Hello, {userName}!</h1>
@@ -65,7 +60,7 @@ export default function Component() {
                 className="h-[200px]"
               >
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
+                  <LineChart data={[]}>
                     <XAxis
                       dataKey="date"
                       stroke="#888888"
