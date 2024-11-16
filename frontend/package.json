@@ -11,9 +11,14 @@
   "dependencies": {
     "@dynamic-labs/ethereum": "^3.6.3",
     "@dynamic-labs/sdk-react-core": "^3.6.3",
+    "@dynamic-labs/wallet-connector-core": "^3.6.3",
+    "expo": "^52.0.7",
     "next": "15.0.3",
+    "permissionless": "^0.2.17",
+    "punycode": "^2.3.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-native-passkey": "2.1.1",
     "viem": "^2.21.45"
   },
   "devDependencies": {
