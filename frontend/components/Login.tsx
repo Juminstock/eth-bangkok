@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Button } from "@/components/ui/button"
 
 function Login() {
     return (
@@ -13,9 +14,13 @@ function Login() {
         >
             <h1 className="bricolage_grotesque" style={{ margin: '5px' }}>Hello, there!</h1>
             <h1 className='bricolage_grotesque'>Welcome to MetaIntents</h1>
-            <Link href="/dashboard"><button style={{ margin: '50px' }}>Go to dashboard →</button></Link>
+            <Link href="/dashboard"><Button style={{ 
+                margin: '50px', 
+                backgroundColor: "#2E01DB", 
+                color: "white"
+            }}>Go to dashboard →</Button></Link>
         </div>
     )
 }
 
-export { Login };  
+export { Login };
