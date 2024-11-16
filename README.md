@@ -1,13 +1,15 @@
-# Project Title
+# MetaIntents
 
 ![Project Image](#)
-> *One-liner describing the project*
+
+
+> Do onchain things no matter where your assets are!
 
 [**View Demo**](#) | [**Documentation**](#) | [**Report a Bug**](#)
 
 ---
 
-## Table of Contents
+# Table of Contents
 - [About the Project](#about-the-project)
   - [Demo](#demo)
   - [How it Works](#how-it-works)
@@ -22,21 +24,18 @@
 ---
 
 ## About the Project
+MetaIntents is a dapp with Chain Abstraction, Safe Modules and Intents based on Base 🧑🏻‍💻.
+
 
 ### Demo
 Provide a link or description of the demo here.
 
 ### How it Works
-Describe the main workflow or features.
+MetaIntents is a dapp with Chain Abstraction, Safe Modules and Intents based on Base 🧑🏻‍💻.
 
 ### Built With
-- Tool/Framework 1
-- Tool/Framework 2
-- Tool/Framework 3
 
----
-
-**Project Title** is supported by the following sponsors:
+**MetaIntents** is supported by the following sponsors:
 - [LayerZero](#)
 - [Biconomy](https://biconomy.io/)
 - [Privy](https://privy.io/)

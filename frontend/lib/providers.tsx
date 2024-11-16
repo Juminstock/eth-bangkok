@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
+import { DynamicPasskeyProvider } from "@dynamic-labs/react-native-passkey";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [isClient, setIsClient] = useState(false);
@@ -22,11 +23,17 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <DynamicContextProvider
       theme={theme}
       settings={{
-        environmentId: process.env.NEXT_PUBLIC_ENVIRONMENT_ID,
+        environmentId: process.env.NEXT_PUBLIC_ENVIRONMENT_ID, // Ensure this is properly set in your .env file
         walletConnectors: [EthereumWalletConnectors],
       }}
     >
-      {children}
+      <DynamicPasskeyProvider
+        settings={{
+          environmentId: process.env.NEXT_PUBLIC_ENVIRONMENT_ID, // Same environment ID as above
+        }}
+      >
+        {children}
+      </DynamicPasskeyProvider>
     </DynamicContextProvider>
   );
 }
