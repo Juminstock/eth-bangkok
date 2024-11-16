@@ -193,14 +193,13 @@ contract Reader is OAppRead, OAppOptionsType3 {
         bytes calldata,
         bytes calldata _response
     ) external pure returns (bytes memory) {
-        require(_response.length >= 32, "Invalid response length"); // quoteExactInputSingle returns multiple values
-
-        // Decode the response to extract amountOut
-        (address token, uint256 amount) = abi.decode(
-            _response,
-            (address, uint256)
-        );
-        return abi.encode(amountOut);
+        (
+            address account,
+            address tokenIn,
+            address tokenOut,
+            uint256 amount
+        ) = abi.decode(_response, (address, address, address, uint256));
+        return abi.encode(account, tokenIn, tokenOut, amount);
     }
 
     function _lzReceive(
@@ -237,8 +236,8 @@ contract Reader is OAppRead, OAppOptionsType3 {
             amount - relayFee,
             CHAIN_A_ID,
             address(0),
-            block.timestamp,
-            block.timestamp,
+            currentTimestamp,
+            fillDeadline,
             0,
             ""
         );
