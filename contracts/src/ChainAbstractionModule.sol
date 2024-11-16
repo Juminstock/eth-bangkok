@@ -3,12 +3,14 @@ pragma solidity ^0.8.22;
 
 import "./Enum.sol";
 import {ISpokePool} from "./interfaces/ISpokePool.sol";
+import {Counter} from "./Counter.sol";
 
 struct Order {
-    address account;
     address tokenIn;
     address tokenOut;
     uint256 amount;
+    uint32 eid;
+    uint32 chainId;
 }
 
 struct Transaction {
@@ -16,7 +18,16 @@ struct Transaction {
     address to;
     uint256 value;
     bytes data;
+    Order[] orders;
 }
+
+event TransactionCreated(
+    address indexed from,
+    address indexed to,
+    uint256 value,
+    bytes data,
+    uint256 id
+);
 
 interface ISafe {
     function execTransactionFromModule(
@@ -29,110 +40,117 @@ interface ISafe {
 
 contract ChainAbstractionModule {
     mapping(uint256 => Transaction) public orderBook;
-    uint256 public transactionId;
 
+    uint256 internal txnCount;
     uint16 internal n;
-    mapping(uint16 => Order) public orders;
-
     uint256 public constant FILL_DEADLINE_BUFFER = 18000;
+    uint32 public eid;
 
     ISpokePool public spokePool;
 
-    constructor(address _spokePool) {
+    constructor(address _spokePool, uint32 _eid) {
         spokePool = ISpokePool(_spokePool);
+        eid = _eid;
+
+        // Testing purposes
+        bytes memory incrementCountCalldata = abi.encodeWithSelector(
+            Counter.increment.selector
+        );
+        Order[] memory _orders = new Order[](1);
+        _orders[0] = Order({
+            tokenIn: 0x4200000000000000000000000000000000000006,
+            tokenOut:0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14,
+            amount: 100000000000000,
+            eid: 0,
+            chainId: 84532
+        });
+        createTransaction(
+            0x4Ff6d608f41c53DB6cf189648B843f5F4cb545d1,
+            0,
+            incrementCountCalldata,
+            0x37d9Bcb63118cbD2cdE1d0E24379a876d687738A,
+            _orders
+        );
     }
 
     function handleCrossChainSwapOrder(
-        address account,
-        address tokenIn,
-        address tokenOut,
-        uint256 amount,
+        uint256 transactionId,
+        address recipent,
         uint256 relayFee,
-        uint256 chainId
+        bytes memory message
     ) public {
+        Transaction storage txn = orderBook[transactionId];
+        Order memory order = getOrder(transactionId, eid);
+
         uint256 currentTimestamp = block.timestamp - 36;
         uint256 fillDeadline = currentTimestamp + FILL_DEADLINE_BUFFER;
-        ISafe safe = ISafe(0x37d9Bcb63118cbD2cdE1d0E24379a876d687738A);
+        ISafe safe = ISafe(txn.from);
         bytes memory data = abi.encodeWithSignature(
             "depositV3(address,address,address,address,uint256,uint256,uint256,address,uint32,uint32,uint32,bytes)",
-            account,
-            account,
-            tokenOut,
-            tokenIn,
-            amount,
-            amount - relayFee,
-            chainId,
+            txn.from,
+            recipent,
+            order.tokenOut,
+            order.tokenIn,
+            order.amount,
+            order.amount - relayFee,
+            order.chainId,
             address(0),
             currentTimestamp,
             fillDeadline,
             0,
-            ""
+            message
         );
         bool success = safe.execTransactionFromModule(
             address(spokePool),
-            amount,
+            order.amount,
             data,
             Enum.Operation.Call
         );
         require(success, "Safe transaction failed");
     }
 
-    // function getOrder(uint16 _orderId) public view returns (Order memory) {
-    //     return orders[_orderId];
-    // }
+    function fulfillTransaction(uint256 _transactionId) public {
+        Transaction storage txn = orderBook[_transactionId];
+        ISafe safe = ISafe(txn.from);
+        bool success = safe.execTransactionFromModule(
+            txn.to,
+            txn.value,
+            txn.data,
+            Enum.Operation.Call
+        );
+        require(success, "Safe transaction failed");
+        delete orderBook[_transactionId];
+    }
 
-    // function setOrder(
-    //     address tokenIn,
-    //     address tokenOut,
-    //     uint256 amount
-    // ) public {
-    //     orders[n] = Order(msg.sender, tokenIn, tokenOut, amount);
-    //     n++;
-    // }
+    function createTransaction(
+        address _to,
+        uint256 _value,
+        bytes memory _data,
+        address account,
+        Order[] memory _orders
+    ) public {
+        orderBook[txnCount] = Transaction({
+            from: account,
+            to: _to,
+            value: _value,
+            data: _data,
+            orders: _orders
+        });
 
-    // function createTransaction(
-    //     address _to,
-    //     uint256 _value,
-    //     bytes calldata _data
-    // ) public returns (uint256) {
-    //     transactionId++;
-    //     orderBook[transactionId] = Transaction({
-    //         from: msg.sender,
-    //         to: _to,
-    //         value: _value,
-    //         data: _data
-    //     });
+        emit TransactionCreated(msg.sender, _to, _value, _data, txnCount);
 
-    //     return transactionId;
-    // }
+        txnCount++;
+    }
 
-    // function getTransaction(
-    //     uint256 _transactionId
-    // )
-    //     external
-    //     view
-    //     returns (address from, address to, uint256 value, bytes memory data)
-    // {
-    //     Transaction storage txn = orderBook[_transactionId];
-    //     return (txn.from, txn.to, txn.value, txn.data);
-    // }
-
-    // function _executeTransaction(
-    //     address to,
-    //     uint256 value,
-    //     bytes calldata data
-    // ) internal returns (bool) {
-    //     bool success = ISafe(txn.from).execTransactionFromModule(
-    //         to,
-    //         value,
-    //         data,
-    //         Enum.Operation.DelegateCall
-    //     );
-    //     require(success, "Transaccion fallida");
-    //     return success;
-    // }
-
-    // function executeTransaction() public {
-    //     _executeTransaction(safe.to, safe.value, safe.data);
-    // }
+    function getOrder(
+        uint256 _transactionId,
+        uint32 _eid
+    ) public view returns (Order memory) {
+        Transaction storage txn = orderBook[_transactionId];
+        for (uint i = 0; i < txn.orders.length; i++) {
+            if (txn.orders[i].eid == _eid) {
+                return txn.orders[i];
+            }
+        }
+    }
 }

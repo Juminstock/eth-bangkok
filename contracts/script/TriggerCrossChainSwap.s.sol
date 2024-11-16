@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import "./Enum.sol";
-import {ISpokePool} from "./interfaces/ISpokePool.sol";
+import "../src/Enum.sol";
+import {ISpokePool} from "../src/interfaces/ISpokePool.sol";
 
 struct Order {
     address account;
