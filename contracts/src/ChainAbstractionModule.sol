@@ -56,11 +56,13 @@ interface ISafe {
 contract ChainAbstractionModule is OAppRead, OAppOptionsType3 {
     mapping(uint256 => Transaction) public orderBook;
     mapping(uint32 => address) public crossChainModules;
+    mapping(uint256 => bytes) public crosschainMessages;
 
     uint256 internal txnCount;
     uint256 public constant FILL_DEADLINE_BUFFER = 18000;
     uint32 public eid;
     ISpokePool public spokePool;
+    address public multicallHandler;
 
     /// @notice LayerZero read message type.
     uint8 private constant READ_MSG_TYPE = 1;
@@ -72,11 +74,13 @@ contract ChainAbstractionModule is OAppRead, OAppOptionsType3 {
         address _spokePool,
         uint32 _eid,
         address _endpoint,
-        uint32 _readChannel
+        uint32 _readChannel,
+        address _multicallHandler
     ) OAppRead(_endpoint, msg.sender) Ownable(msg.sender) {
         spokePool = ISpokePool(_spokePool);
         eid = _eid;
         READ_CHANNEL = _readChannel;
+        multicallHandler = _multicallHandler;
         _setPeer(READ_CHANNEL, AddressCast.toBytes32(address(this)));
     }
 
@@ -87,39 +91,43 @@ contract ChainAbstractionModule is OAppRead, OAppOptionsType3 {
         crossChainModules[_eid] = _module;
     }
 
-    // function handleCrossChainSwapOrder(
-    //     uint256 transactionId,
-    //     address recipent,
-    //     uint256 relayFee,
-    //     bytes memory message
-    // ) public {
+    function handleCrossChainSwapOrder(
+        address account,
+        address tokenOut,
+        address tokenIn,
+        uint256 transactionId,
+        uint256 relayFee,
+        uint256 amount,
+        uint32 chainId,
+        bytes memory message
+    ) internal {
 
-    //     uint256 currentTimestamp = block.timestamp - 36;
-    //     uint256 fillDeadline = currentTimestamp + FILL_DEADLINE_BUFFER;
-    //     ISafe safe = ISafe(txn.from);
-    //     bytes memory data = abi.encodeWithSignature(
-    //         "depositV3(address,address,address,address,uint256,uint256,uint256,address,uint32,uint32,uint32,bytes)",
-    //         txn.from,
-    //         recipent,
-    //         order.tokenOut,
-    //         order.tokenIn,
-    //         order.amount,
-    //         order.amount - relayFee,
-    //         order.chainId,
-    //         address(0),
-    //         currentTimestamp,
-    //         fillDeadline,
-    //         0,
-    //         message
-    //     );
-    //     bool success = safe.execTransactionFromModule(
-    //         address(spokePool),
-    //         order.amount,
-    //         data,
-    //         Enum.Operation.Call
-    //     );
-    //     require(success, "Safe transaction failed");
-    // }
+        uint256 currentTimestamp = block.timestamp - 36;
+        uint256 fillDeadline = currentTimestamp + FILL_DEADLINE_BUFFER;
+        ISafe safe = ISafe(account);
+        bytes memory data = abi.encodeWithSignature(
+            "depositV3(address,address,address,address,uint256,uint256,uint256,address,uint32,uint32,uint32,bytes)",
+            account,
+            multicallHandler,
+            tokenOut,
+            tokenIn,
+            amount,
+            amount - relayFee,
+            chainId,
+            address(0),
+            currentTimestamp,
+            fillDeadline,
+            0,
+            message
+        );
+        bool success = safe.execTransactionFromModule(
+            address(spokePool),
+            amount,
+            data,
+            Enum.Operation.Call
+        );
+        require(success, "Safe transaction failed");
+    }
 
     function fulfillTransaction(uint256 _transactionId) public {
         Transaction storage txn = orderBook[_transactionId];
@@ -157,7 +165,7 @@ contract ChainAbstractionModule is OAppRead, OAppOptionsType3 {
    function getOrder(
         uint256 _transactionId,
         uint32 _eid
-    ) public view returns (address,address,address,uint256,uint32,uint32) {
+    ) public view returns (address,address,address,uint256,uint256,uint32,uint32) {
         Transaction storage txn = orderBook[_transactionId];
         for (uint i = 0; i < txn.orders.length; i++) {
             if (txn.orders[i].eid == _eid) {
@@ -167,6 +175,7 @@ contract ChainAbstractionModule is OAppRead, OAppOptionsType3 {
                     order.tokenOut,
                     txn.from,
                     order.amount,
+                    _transactionId,
                     order.eid,
                     order.chainId
                 );
@@ -177,8 +186,10 @@ contract ChainAbstractionModule is OAppRead, OAppOptionsType3 {
     function readModule(
         uint256 transactionId,
         uint32 targetEid,
-        bytes calldata _extraOptions
+        bytes calldata _extraOptions,
+        bytes calldata message
     ) external payable returns (MessagingReceipt memory receipt) {
+        crosschainMessages[transactionId] = message;
         bytes memory cmd = getCmd(transactionId, targetEid);
         return
             _lzSend(
@@ -256,9 +267,9 @@ contract ChainAbstractionModule is OAppRead, OAppOptionsType3 {
         address,
         bytes calldata
     ) internal override {
-        (address tokenIn, address tokenOut, address account, uint256 amount, uint32 eid, uint32 chainId ) = abi.decode(
+        (address tokenIn, address tokenOut, address account, uint256 amount, uint256 transactionId ,uint32 eid, uint32 chainId) = abi.decode(
             _message,
-            (address,address,address,uint256,uint32,uint32)
+            (address,address,address,uint256,uint256,uint32,uint32)
         );
         emit OrderSettled(
             tokenIn,
@@ -267,6 +278,17 @@ contract ChainAbstractionModule is OAppRead, OAppOptionsType3 {
             eid,
             chainId,
             account
+        );
+        
+        handleCrossChainSwapOrder(
+            account,
+            tokenOut,
+            tokenIn,
+            transactionId,
+            900000000000,
+            amount,
+            chainId,
+            crosschainMessages[transactionId]
         );
     }
 }

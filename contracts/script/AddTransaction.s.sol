@@ -11,7 +11,7 @@ contract AddTransaction is Script{
     ChainAbstractionModule public module;
 
     function setUp() public {
-        module = ChainAbstractionModule(0x054E0eBC90a2B86c9cAb010b48F0d35CAdD3dE85);
+        module = ChainAbstractionModule(0xFBD8b9B90c60525CA2E8F33B4e7C523B7aBD516F);
     }
 
     function run() public {
