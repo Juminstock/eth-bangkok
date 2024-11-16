@@ -1,5 +1,5 @@
-export const BASE_SEPOLIA_MODULE = "0xfbd8b9b90c60525ca2e8f33b4e7c523b7abd516f"
-export const SEPOLIA_MODULE = "0x464b830085d196174d4842d83491bb82458ecbe3"
+export const BASE_SEPOLIA_MODULE = "0xfbd8b9b90c60525ca2e8f33b4e7c523b7abd516f" as `0x${string}`
+export const SEPOLIA_MODULE = "0x464b830085d196174d4842d83491bb82458ecbe3" as `0x${string}`
 
 export const MODULE_ABI = [
     {

@@ -17,15 +17,61 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useWriteContract } from 'wagmi'
+import { BASE_SEPOLIA_MODULE, MODULE_ABI } from "@/constants"
+import { encodeFunctionData, parseEther } from "viem"
 
 function SupplyFlow() {
+  const { writeContract } = useWriteContract()
   const [token, setToken] = useState("")
   const [amount, setAmount] = useState("")
 
   const handleSendTokens = () => {
-    console.log("Sending tokens:", { token, amount, address })
-    setToken("")
-    setAmount("")
+    const orders = [{
+      tokenIn: "0x4200000000000000000000000000000000000006",
+      tokenOut: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
+      amount: 100000000000000,
+      eid: 40161,
+      chainId: 84532
+    }]
+    const supplyCalldata = encodeFunctionData({
+      abi: [
+        {
+          name: 'supply',
+          type: 'function',
+          inputs: [
+            { name: 'asset', type: 'address' },
+            { name: 'amount', type: 'uint256' },
+            { name: 'onBehalfOf', type: 'address' },
+            { name: 'referralCode', type: 'uint16' }
+          ],
+          outputs: [],
+          stateMutability: 'nonpayable'
+        }
+      ],
+      functionName: 'supply',
+      args: [
+        '0x4200000000000000000000000000000000000006',        
+        parseEther(amount),    
+        "0x37d9Bcb63118cbD2cdE1d0E24379a876d687738A",    
+          0        
+      ]                         
+    });
+    
+    writeContract({
+      address: BASE_SEPOLIA_MODULE,
+      abi: MODULE_ABI,
+      functionName: "createTransaction",
+      args: [
+        "0x07eA79F68B2B3df564D0A34F8e19D9B1e339814b",
+        0,
+        supplyCalldata,
+        "0x37d9Bcb63118cbD2cdE1d0E24379a876d687738A",
+        orders 
+
+
+      ]
+    })
   }
 
   return (
@@ -36,7 +82,7 @@ function SupplyFlow() {
           size="lg"
         >
           <Send className="mr-2 h-4 w-4" />
-          Transfer
+          Supply
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

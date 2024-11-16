@@ -142,7 +142,7 @@ export default function Component() {
                   <Send className="mr-2 h-4 w-4" />
                   Transfer
                 </Button>
-               <SupplyFlow 
+               <SupplyFlow />
               </div>
             </CardContent>
           </Card>
