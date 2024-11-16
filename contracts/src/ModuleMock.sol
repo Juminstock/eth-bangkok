@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
+<<<<<<< HEAD
 import "./Enum.sol";
 
+=======
+>>>>>>> 36c47e5 (feat: re-structure)
 struct Order {
     address account;
     address tokenIn;
@@ -10,6 +13,7 @@ struct Order {
     uint256 amount;
 }
 
+<<<<<<< HEAD
 struct Transaction {
     address from;
     address to;
@@ -26,6 +30,8 @@ interface ISafe {
     ) external returns (bool success);
 }
 
+=======
+>>>>>>> 36c47e5 (feat: re-structure)
 contract ModuleMock {
     uint16 internal n;
     mapping(uint16 => Order) public orders;
@@ -43,6 +49,7 @@ contract ModuleMock {
         n++;
     }
 }
+<<<<<<< HEAD
 
 
 
@@ -88,3 +95,5 @@ contract ChainAbstractionModule {
     //     _executeTransaction(safe.to, safe.value, safe.data);
     // }
 }
+=======
+>>>>>>> 36c47e5 (feat: re-structure)
