@@ -1,5 +1,4 @@
-import { DynamicContextProvider, DynamicWidget } from '@dynamic-labs/sdk-react-core';
-import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
+import Link from 'next/link';
 
 function Login() {
     return (
@@ -13,16 +12,10 @@ function Login() {
             }}
         >
             <h1 className="bricolage_grotesque" style={{ margin: '5px' }}>Hello, there!</h1>
-            <h1 className='bricolage_grotesque' style={{ margin: '5px' }}>Welcome to MetaIntents</h1>
-            <DynamicContextProvider
-                settings={{
-                environmentId: '865c2fad-5f3a-4b3c-8d1c-62dad61f518d',
-                walletConnectors: [ EthereumWalletConnectors ],
-                }}>
-                <DynamicWidget />
-            </DynamicContextProvider>
+            <h1 className='bricolage_grotesque'>Welcome to MetaIntents</h1>
+            <Link href="/dashboard"><button style={{ margin: '50px' }}>Go to dashboard →</button></Link>
         </div>
     )
 }
 
-export { Login };
+export { Login };  
