@@ -52,7 +52,7 @@ function SupplyFlow() {
       functionName: 'supply',
       args: [
         '0x4200000000000000000000000000000000000006',        
-        BigInt(100000000000000),    
+        BigInt(3000000000000),    
         "0x37d9Bcb63118cbD2cdE1d0E24379a876d687738A",    
           0        
       ]                         
