@@ -3,7 +3,7 @@
 ![MetaIntents](./frontend/public/MetaIntents-blue.png)
 
 
-> The door to the new version of internet
+A module for smart wallets for default cross-chain transactions, utilizing multiple chains simultaneously.
 
 [**View Demo**](#) | [**Slides**](https://docs.google.com/presentation/d/1exWiL3x_nM_RZHnsxRi7SxBX0pz1ihN_BkVOLXcGu8s/edit?usp=sharing) | [**Documentation**](https://github.com/Juminstock/eth-bangkok) 
 
@@ -24,22 +24,26 @@
 ---
 
 ## About the Project
-MetaIntents is a dapp with Chain Abstraction, Safe Modules and Intents based on Base 🧑🏻‍💻.
-
+This project enables the integration of a module into a smart wallet, allowing seamless cross-chain transactions by default. It leverages two or more chains simultaneously, ensuring transactions can be executed efficiently across different networks without user intervention, even when funds are insufficient on the originating chain.
 
 ### Demo
-Provide a link or description of the demo here.
+Check our demo here: [View Demo]()
 
 ### How it Works
-MetaIntents is a dapp with Chain Abstraction, Safe Modules and Intents based on Base 🧑🏻‍💻.
+We use Dynamic as our smart wallet provider, integrating it with a module created with LayerZero. 
+
+When a user initiates a transaction on a chain where their wallet lacks sufficient funds, our module intervenes. It extracts the calldata from the original transaction, replicates it on other supported chains, and resolves the transaction using a Solver. 
+
+The solver ensures the transaction is executed on-chain using LayerZero's cross-chain messaging capabilities, effectively bridging funds or resources between chains to complete the original transaction.
+
+![MetaIntents](./frontend/public/MetaIntents-diagram.png)
+
 
 ### Built With
 
 **MetaIntents** is supported by the following sponsors:
 - [Dynamic](https://dynamic.xyz/)
 - [LayerZero](https://layerzero.network/)
-- [Dynamic](https://dynamic.xyz/)
-- [Blockscout](https://blockscout.com/)
 
 ---
 
