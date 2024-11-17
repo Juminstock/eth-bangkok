@@ -148,7 +148,7 @@ contract ChainAbstractionModule is OAppRead, OAppOptionsType3 {
         bytes memory _data,
         address account,
         Order[] memory _orders
-    ) public {
+    ) public returns (uint256) {
         orderBook[txnCount] = Transaction({
             from: account,
             to: _to,
@@ -160,6 +160,7 @@ contract ChainAbstractionModule is OAppRead, OAppOptionsType3 {
         emit TransactionCreated(msg.sender, _to, _value, _data, txnCount);
 
         txnCount++;
+        return txnCount - 1;
     }
 
    function getOrder(

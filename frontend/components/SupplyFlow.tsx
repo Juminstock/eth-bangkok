@@ -30,7 +30,7 @@ function SupplyFlow() {
     const orders = [{
       tokenIn: "0x4200000000000000000000000000000000000006",
       tokenOut: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
-      amount: 100000000000000,
+      amount: 100000000000000 + 900000000000,
       eid: 40161,
       chainId: 84532
     }]
@@ -52,7 +52,7 @@ function SupplyFlow() {
       functionName: 'supply',
       args: [
         '0x4200000000000000000000000000000000000006',        
-        parseEther(amount),    
+        BigInt(100000000000000),    
         "0x37d9Bcb63118cbD2cdE1d0E24379a876d687738A",    
           0        
       ]                         
